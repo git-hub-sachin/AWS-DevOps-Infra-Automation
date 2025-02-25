@@ -7,8 +7,7 @@ resource "aws_eks_cluster" "main" {
     endpoint_public_access  = false
   }
   depends_on = [
-    aws_iam_role_policy_attachment.eks_policy,
-    aws_eks_node_group.nodes
+    aws_iam_role_policy_attachment.eks_policy
   ]
 }
 
@@ -63,7 +62,8 @@ resource "aws_eks_node_group" "nodes" {
   depends_on = [
     aws_iam_role_policy_attachment.node_policy,
     aws_iam_role_policy_attachment.cni_policy,
-    aws_iam_role_policy_attachment.ecr_policy
+    aws_iam_role_policy_attachment.ecr_policy,
+    aws_eks_cluster.main
   ]
 }
 
