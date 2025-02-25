@@ -6,6 +6,10 @@ resource "aws_eks_cluster" "main" {
     endpoint_private_access = true
     endpoint_public_access  = false
   }
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_policy,
+    aws_eks_node_group.nodes
+  ]
 }
 
 resource "aws_security_group" "eks_nodes_sg" {
@@ -20,7 +24,7 @@ resource "aws_security_group" "eks_nodes_sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    self        = true # Allow nodes to communicate with each other
+    self        = true
   }
   ingress {
     from_port   = 443
