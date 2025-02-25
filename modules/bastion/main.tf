@@ -4,13 +4,28 @@ resource "aws_instance" "bastion" {
   subnet_id     = var.public_subnet_id
   key_name      = var.key_name
   vpc_security_group_ids = [aws_security_group.bastion_sg.id]
-  tags = {
-    Name = "Project-Bastion-Host"
-  }
   root_block_device {
     volume_size = 30
     volume_type = "gp3"
     delete_on_termination = true
+  }
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo apt update
+              apt install -y unzip curl
+              sudo apt install -y software-properties-common
+              sudo add-apt-repository --yes --update ppa:ansible/ansible
+              sudo apt install -y ansible  
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              sudo ./aws/install
+              curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.32.0/2024-12-20/bin/linux/amd64/kubectl
+              chmod +x ./kubectl
+              mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$HOME/bin:$PATH
+              echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+              EOF
+  tags = {
+    Name = "Project-Bastion-Host"
   }
 }
 
