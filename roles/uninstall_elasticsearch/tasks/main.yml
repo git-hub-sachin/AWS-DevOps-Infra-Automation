@@ -2,23 +2,57 @@
   ansible.builtin.service:
     name: elasticsearch
     state: stopped
-  ignore_errors: yes  # Continue even if service is already stopped
+  ignore_errors: yes 
 
 - name: Uninstall Elasticsearch package
   ansible.builtin.apt:
     name: elasticsearch
     state: absent
-    purge: yes
+    purge: yes  
 
 - name: Remove Elasticsearch repository
-  ansible.builtin.file:
-    path: /etc/apt/sources.list.d/elastic-8.x.list
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
     state: absent
+    filename: elastic-8.x
 
-- name: Remove Elasticsearch GPG key
+- name: Remove Elasticsearch GPG keyring
   ansible.builtin.file:
     path: /usr/share/keyrings/elasticsearch-keyring.gpg
     state: absent
+
+- name: Remove Elasticsearch data directory
+  ansible.builtin.file:
+    path: /var/lib/elasticsearch
+    state: absent
+  become: yes
+
+- name: Remove Elasticsearch configuration directory
+  ansible.builtin.file:
+    path: /etc/elasticsearch
+    state: absent
+  become: yes
+
+- name: Remove Elasticsearch log directory
+  ansible.builtin.file:
+    path: /var/log/elasticsearch
+    state: absent
+  become: yes
+
+- name: Remove Elasticsearch systemd unit file
+  ansible.builtin.file:
+    path: /usr/lib/systemd/system/elasticsearch.service
+    state: absent
+  become: yes
+
+- name: Reload systemd daemon after removal
+  ansible.builtin.command: systemctl daemon-reload
+  become: yes
+
+- name: Reset failed state of Elasticsearch service
+  ansible.builtin.command: systemctl reset-failed elasticsearch
+  become: yes
+  ignore_errors: yes
 
 - name: Update apt cache after removal
   ansible.builtin.apt:
