@@ -1,0 +1,5 @@
+- name: Install Jenkins on Bastion Host
+  hosts: bastion
+  become: yes
+  roles:
+    - install_jenkins

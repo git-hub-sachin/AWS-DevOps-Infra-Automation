@@ -1,0 +1,25 @@
+- name: Stop Elasticsearch service
+  ansible.builtin.service:
+    name: elasticsearch
+    state: stopped
+  ignore_errors: yes  # Continue even if service is already stopped
+
+- name: Uninstall Elasticsearch package
+  ansible.builtin.apt:
+    name: elasticsearch
+    state: absent
+    purge: yes
+
+- name: Remove Elasticsearch repository
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/elastic-8.x.list
+    state: absent
+
+- name: Remove Elasticsearch GPG key
+  ansible.builtin.file:
+    path: /usr/share/keyrings/elasticsearch-keyring.gpg
+    state: absent
+
+- name: Update apt cache after removal
+  ansible.builtin.apt:
+    update_cache: yes

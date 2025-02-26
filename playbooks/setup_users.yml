@@ -1,0 +1,5 @@
+- name: Set up ansible user on all hosts
+  hosts: all
+  become: yes
+  roles:
+    - setup_users

@@ -1,0 +1,5 @@
+- name: Uninstall Elasticsearch from Elasticsearch VMs
+  hosts: elasticsearch
+  become: yes
+  roles:
+    - uninstall_elasticsearch

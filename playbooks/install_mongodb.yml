@@ -1,0 +1,5 @@
+- name: Install MongoDB on MongoDB VMs
+  hosts: mongodb
+  become: yes
+  roles:
+    - install_mongodb

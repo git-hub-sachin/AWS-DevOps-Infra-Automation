@@ -1,0 +1,35 @@
+- name: Install gnupg and curl
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - gnupg
+    - curl
+
+- name: Import MongoDB GPG key
+  ansible.builtin.shell: |
+    curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+    sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+  args:
+    creates: /usr/share/keyrings/mongodb-server-8.0.gpg
+
+- name: Add MongoDB repository
+  ansible.builtin.apt_repository:
+    repo: "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse"
+    state: present
+    filename: mongodb-org-8.0
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install MongoDB
+  ansible.builtin.apt:
+    name: mongodb-org
+    state: present
+
+- name: Start MongoDB service
+  ansible.builtin.service:
+    name: mongod
+    state: started
+    enabled: yes

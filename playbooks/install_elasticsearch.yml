@@ -1,0 +1,5 @@
+- name: Install Elasticsearch on Elasticsearch VMs
+  hosts: elasticsearch
+  become: yes
+  roles:
+    - install_elasticsearch

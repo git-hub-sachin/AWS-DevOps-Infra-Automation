@@ -1,0 +1,5 @@
+- name: Uninstall MongoDB from MongoDB VMs
+  hosts: mongodb
+  become: yes
+  roles:
+    - uninstall_mongodb
