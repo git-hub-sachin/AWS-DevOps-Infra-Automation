@@ -1,5 +1,0 @@
-- name: Configure Elasticsearch cluster
-  hosts: elasticsearch
-  become: yes
-  roles:
-    - configure_elasticsearch

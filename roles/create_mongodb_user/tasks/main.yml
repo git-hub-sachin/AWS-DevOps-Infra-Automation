@@ -1,0 +1,36 @@
+- name: Ensure MongoDB is running
+  service:
+    name: mongod  # Adjust to 'mongodb' if needed
+    state: started
+    enabled: true
+
+- name: Wait for MongoDB to be ready on primary
+  wait_for:
+    host: "{{ hostvars['mongodb1'].ansible_host }}"
+    port: 27017
+    state: started
+    timeout: 60
+  when: inventory_hostname == "mongodb1"
+
+- name: Create MongoDB admin user on primary
+  shell: |
+    mongosh --host "{{ hostvars['mongodb1'].ansible_host }}" --eval '
+      db.getSiblingDB("admin").createUser({
+        user: "{{ mongodb_admin_user }}",
+        pwd: "{{ mongodb_admin_password }}",
+        roles: [
+          { role: "root", db: "admin" }
+        ]
+      })
+    '
+  when: inventory_hostname == "mongodb1"
+  register: user_creation
+  failed_when: user_creation.rc != 0 and "'E11000 duplicate key error' not in user_creation.stderr"
+  ignore_errors: yes
+
+- name: Verify user creation
+  shell: |
+    mongosh --host "{{ hostvars['mongodb1'].ansible_host }}" -u "{{ mongodb_admin_user }}" -p "{{ mongodb_admin_password }}" --authenticationDatabase "admin" --eval 'db.getSiblingDB("admin").getUsers()'
+  when: inventory_hostname == "mongodb1"
+  register: user_verify
+  failed_when: user_verify.rc != 0
