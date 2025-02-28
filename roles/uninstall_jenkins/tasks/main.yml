@@ -1,0 +1,32 @@
+- name: Stop Jenkins service
+  ansible.builtin.service:
+    name: jenkins
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+  become: yes
+
+- name: Uninstall Jenkins
+  ansible.builtin.apt:
+    name: jenkins
+    state: absent
+    purge: yes
+  become: yes
+
+- name: Remove Jenkins repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://pkg.jenkins.io/debian-stable binary/"
+    state: absent
+    filename: jenkins
+  become: yes
+
+- name: Remove Jenkins apt key
+  ansible.builtin.apt_key:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    state: absent
+  become: yes
+
+- name: Update apt cache after removals
+  ansible.builtin.apt:
+    update_cache: yes
+  become: yes

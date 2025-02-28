@@ -1,0 +1,6 @@
+- hosts: bastion
+  roles:
+    - role: jenkins_user
+  vars:
+    jenkins_username: "user"
+    jenkins_password_hash: "admin123"
