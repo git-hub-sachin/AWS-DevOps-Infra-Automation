@@ -1,5 +1,5 @@
 - name: Configure MongoDB Replica Set
   hosts: mongodb
-  become: yes
+  become: true
   roles:
     - configure_mongodb_replicaset

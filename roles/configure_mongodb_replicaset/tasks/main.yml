@@ -1,60 +1,54 @@
 - name: Set replication configuration in mongod.conf
-  ansible.builtin.blockinfile:
+  blockinfile:
     path: /etc/mongod.conf
     marker: "# {mark} ANSIBLE MANAGED BLOCK"
     block: |
       replication:
-        replSetName: "rs0"
+        replSetName: "{{ replica_set_name }}"
   notify: Restart MongoDB
 
-- name: Ensure bindIp is set to 0.0.0.0 for external connections
-  ansible.builtin.lineinfile:
+- name: Ensure bindIp allows connections from all nodes
+  lineinfile:
     path: /etc/mongod.conf
     regexp: '^(\s*)bindIp:'
     line: '\1bindIp: 0.0.0.0'
     backrefs: yes
   notify: Restart MongoDB
 
+- name: Ensure MongoDB service is restarted and enabled
+  service:
+    name: mongod
+    state: restarted
+    enabled: true
+
 - name: Wait for MongoDB to be ready on all nodes
-  ansible.builtin.wait_for:
+  wait_for:
     host: "{{ ansible_host }}"
     port: 27017
     state: started
     timeout: 60
 
-- name: Check the current primary node
-  ansible.builtin.shell: |
-    mongosh --host "{{ hostvars['mongodb1']['ansible_host'] }}" --eval '
-      rs.status().members.find(m => m.stateStr === "PRIMARY").name
+- name: Initialize Replica Set on Primary if not initialized
+  shell: |
+    mongosh --host "{{ hostvars['mongodb1'].ansible_host }}" --eval '
+      var config = {
+        _id: "{{ replica_set_name }}",
+        members: [
+          { _id: 0, host: "{{ hostvars['mongodb1'].ansible_host }}:27017", priority: 2 },
+          { _id: 1, host: "{{ hostvars['mongodb2'].ansible_host }}:27017", priority: 1 },
+          { _id: 2, host: "{{ hostvars['mongodb3'].ansible_host }}:27017", priority: 1 }
+        ]
+      };
+      rs.initiate(config);
     '
   when: inventory_hostname == "mongodb1"
-  register: current_primary
-  failed_when: false
-  changed_when: false
-
-- name: Step down the current primary if not mongodb1
-  ansible.builtin.shell: |
-    mongosh --host "{{ hostvars['mongodb1']['ansible_host'] }}" --eval 'rs.stepDown(60)'
-  when:
-    - inventory_hostname == "mongodb1"
-    - "'mongodb1' not in current_primary.stdout"
+  register: rs_init
+  failed_when: rs_init.rc != 0 and "'already initialized' not in rs_init.stderr"
   ignore_errors: yes
 
-- name: Reconfigure replica set with mongodb1 as priority
-  ansible.builtin.shell: |
-    mongosh --host "{{ hostvars['mongodb1']['ansible_host'] }}" --eval '
-      cfg = rs.conf();
-      cfg.members = [
-        { _id: 0, host: "{{ hostvars['mongodb1']['ansible_host'] }}:27017", priority: 2 },
-        { _id: 1, host: "{{ hostvars['mongodb2']['ansible_host'] }}:27017", priority: 1 },
-        { _id: 2, host: "{{ hostvars['mongodb3']['ansible_host'] }}:27017", priority: 1 }
-      ];
-      rs.reconfig(cfg, { force: true });
-    '
-  when:
-    - inventory_hostname == "mongodb1"
-    - "'mongodb1' not in current_primary.stdout"
-  register: rs_reconfig
-  failed_when: rs_reconfig.rc != 0
-  ignore_errors: yes
-
+- name: Verify Replica Set Status
+  shell: |
+    mongosh --host "{{ hostvars['mongodb1'].ansible_host }}" --eval 'rs.status()'
+  when: inventory_hostname == "mongodb1"
+  register: rs_status
+  failed_when: rs_status.rc != 0
