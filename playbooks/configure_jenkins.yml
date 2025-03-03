@@ -1,0 +1,6 @@
+- name: Setup Jenkins on Ubuntu
+  hosts: bastion
+  become: yes
+  roles:
+    - jenkins_config
+

@@ -1,0 +1,42 @@
+- name: Include variables
+  include_vars: vars/main.yml
+
+- name: Skip Jenkins setup wizard
+  shell: echo "2.0" | tee /var/lib/jenkins/jenkins.install.UpgradeWizard.state
+  become: yes
+
+- name: Set correct permissions for UpgradeWizard.state
+  file:
+    path: /var/lib/jenkins/jenkins.install.UpgradeWizard.state
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
+  become: yes
+
+- name: Restart Jenkins
+  systemd:
+    name: jenkins
+    state: restarted
+  become: yes
+
+- name: Create Jenkins init.groovy.d directory
+  file:
+    path: /var/lib/jenkins/init.groovy.d
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
+
+- name: Copy Groovy script to create admin user
+  template:
+    src: createUser.groovy.j2
+    dest: /var/lib/jenkins/init.groovy.d/createUser.groovy
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
+
+- name: Restart Jenkins to apply changes
+  systemd:
+    name: jenkins
+    state: restarted
+
