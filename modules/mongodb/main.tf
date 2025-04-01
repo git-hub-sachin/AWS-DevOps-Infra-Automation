@@ -1,6 +1,6 @@
 resource "aws_instance" "mongodb" {
-  count         = 3
-  ami           = "ami-04b4f1a9cf54c11d0"
+  count         = 2
+  ami           = var.ami_id
   instance_type = "t3.medium"
   subnet_id     = element(var.private_subnet_ids, count.index % 2)
   key_name      = var.key_name

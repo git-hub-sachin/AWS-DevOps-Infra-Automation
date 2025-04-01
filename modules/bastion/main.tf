@@ -1,5 +1,5 @@
 resource "aws_instance" "bastion" {
-  ami           = "ami-04b4f1a9cf54c11d0"
+  ami           = var.ami_id
   instance_type = "m5.xlarge"
   subnet_id     = var.public_subnet_id
   key_name      = var.key_name

@@ -8,6 +8,7 @@ module "vpc" {
 
 module "bastion" {
   source          = "./modules/bastion"
+  ami_id          = var.ami_id
   vpc_id          = module.vpc.vpc_id
   public_subnet_id = module.vpc.public_subnet_ids[0]
   key_name        = var.key_name
@@ -15,6 +16,7 @@ module "bastion" {
 
 module "elasticsearch" {
   source           = "./modules/elasticsearch"
+  ami_id          = var.ami_id
   vpc_id           = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
   key_name         = var.key_name
@@ -23,6 +25,7 @@ module "elasticsearch" {
 
 module "mongodb" {
   source           = "./modules/mongodb"
+  ami_id          = var.ami_id
   vpc_id           = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
   key_name         = var.key_name
