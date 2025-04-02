@@ -1,3 +1,12 @@
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state-docker-image"
+    key            = "terraform.tfstate"            
+    region         = "us-west-1"                        
+    # dynamodb_table = "terraform-locks"                 
+  }
+}
+
 resource "tls_private_key" "generated_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
