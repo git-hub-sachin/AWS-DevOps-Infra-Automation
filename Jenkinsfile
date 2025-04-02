@@ -25,7 +25,7 @@ pipeline {
             steps {
                 script {
                     sh "docker build -t ${ECR_REPO} ."
-                    sh "docker tag ${ECR_REPO}:latest ${ECR_REGISTRY}/${ECR_REPO}:latest"
+                    sh "docker tag ${ECR_REPO}:latest ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
                 }
             }
         }
