@@ -1,3 +1,8 @@
+variable "eks_role_name" {
+  description = "Name of the IAM role for the EKS cluster"
+  type        = string
+}
+
 variable "private_subnet_ids" { type = list(string) }
 
 variable "cluster_name" {

@@ -47,7 +47,7 @@ resource "aws_security_group_rule" "eks_control_plane_ingress" {
 
 resource "aws_eks_node_group" "nodes" {
   cluster_name    = var.cluster_name
-  node_group_name = "Project-main-nodeGroup"
+  node_group_name = "${var.cluster_name}-nodegroup"
   node_role_arn   = aws_iam_role.eks_node_role.arn
   subnet_ids      = var.private_subnet_ids
   scaling_config {
@@ -68,7 +68,7 @@ resource "aws_eks_node_group" "nodes" {
 }
 
 resource "aws_iam_role" "eks_role" {
-  name = "eks-cluster-role"
+  name = var.eks_role_name
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
