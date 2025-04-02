@@ -3,6 +3,7 @@ pipeline {
     parameters {
         choice(name: 'ENVIRONMENT', choices: ['dev', 'test', 'prod'], description: 'Select the environment to deploy')
         choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Choose to apply or destroy the infrastructure')
+        string(name: 'GIT_BRANCH', defaultValue: 'multi-aws-infra', description: 'Git branch to use')
     }
     environment {
         AWS_REGION = 'us-west-1'
@@ -11,6 +12,15 @@ pipeline {
         IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
     stages {
+        stage('Checkout Code') {
+            steps {
+                script {
+                    git branch: "${params.GIT_BRANCH}",
+                        credentialsId: 'github-credentials',
+                        url: 'https://github.com/git-hub-sachin/AWS-DevOps-Infra-Automation.git'
+                }
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -42,29 +52,24 @@ pipeline {
             }
         }
         stage('Generate Terraform Plan') {
-            when {
-                expression { params.ACTION == 'apply' }
-            }
             steps {
                 script {
+                    def planAction = (params.ACTION == 'apply') ? 'plan-apply' : 'plan-destroy'
                     sh """
                     docker run --rm \
                         -e AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID} \
                         -e AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY} \
                         -v \$(pwd):/app \
                         ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} \
-                        plan ${params.ENVIRONMENT}
+                        ${planAction} ${params.ENVIRONMENT}
                     """
                 }
             }
         }
         stage('Approve Changes') {
-            when {
-                expression { params.ACTION == 'apply' }
-            }
             steps {
                 script {
-                    input message: "Review the Terraform plan. Approve to apply changes?", ok: "Apply"
+                    input message: "Review the Terraform plan for ${params.ACTION}. Approve to proceed?", ok: "Proceed"
                 }
             }
         }
