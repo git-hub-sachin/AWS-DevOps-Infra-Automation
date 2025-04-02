@@ -24,7 +24,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}")
+                    sh "docker build -t ${ECR_REPO} ."
+                    sh "docker tag ${ECR_REPO}:latest ${ECR_REGISTRY}/${ECR_REPO}:latest"
                 }
             }
         }
