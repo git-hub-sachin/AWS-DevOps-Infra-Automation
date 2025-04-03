@@ -51,7 +51,7 @@ pipeline {
                             -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
                             -v \$(pwd):/app \
                             ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} \
-                            init -reconfigure -backend-config="key=${params.ENVIRONMENT}/terraform.tfstate"
+                            init ${params.ENVIRONMENT}
                         """
                     }
                 }
