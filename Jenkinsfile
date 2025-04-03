@@ -68,7 +68,7 @@ pipeline {
                             -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
                             -v \$(pwd):/app \
                             ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} \
-                            ./script.sh ${terraformCommand} ${params.ENVIRONMENT}
+                            ./script.sh ''' + terraformCommand + ' ' + params.ENVIRONMENT
                         """
                     }
                 }
