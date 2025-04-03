@@ -61,14 +61,14 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]){
                     script {
-                        def terraformCommand = (params.ACTION == 'apply') ? 'plan -out=tfplan' : 'plan -out=tfplan -destroy'
+                        def terraformCommand = (params.ACTION == 'apply') ? 'plan' : 'destroy'
                         sh """
                         docker run --rm \
                             -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
                             -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
                             -v \$(pwd):/app \
                             ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} \
-                            ${terraformCommand} ${params.ENVIRONMENT}
+                            ./script.sh ${terraformCommand} ${params.ENVIRONMENT}
                         """
                     }
                 }
