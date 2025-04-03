@@ -61,7 +61,7 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]){
                     script {
-                        def terraformCommand = (params.ACTION == 'apply') ? 'plan' : 'destroy'
+                        def terraformCommand = (params.ACTION == 'apply') ? 'plan -out=tfplan' : 'plan -destroy -out=tfplan'
                         sh """
                         docker run --rm \
                             -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
@@ -77,7 +77,14 @@ pipeline {
         stage('Approve Changes') {
             steps {
                 script {
-                    input message: "Review the Terraform plan for ${params.ACTION}. Approve to proceed?", ok: "Proceed"
+                    def userInput = input(
+                        message: "Do you want to proceed with ${params.ACTION}?",
+                        parameters: [choice(name: 'APPROVE', choices: ['Proceed', 'Abort'], description: 'Approve or Abort')]
+                    )
+
+                    if (userInput == 'Abort') {
+                        error("User aborted the Terraform ${params.ACTION} process.")
+                    }
                 }
             }
         }
@@ -91,7 +98,7 @@ pipeline {
                             -e AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY \
                             -v \$(pwd):/app \
                             ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} \
-                            ${params.ACTION} ${params.ENVIRONMENT}
+                            apply -auto-approve=false tfplan
                         """
                     }
                 }
