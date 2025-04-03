@@ -61,14 +61,14 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]){
                     script {
-                        def terraformCommand = (params.ACTION == 'apply') ? 'plan' : 'destroy'
+                        def planAction = (params.ACTION == 'apply') ? 'plan-apply' : 'plan-destroy'
                         sh """
                         docker run --rm \
                             -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
                             -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
                             -v \$(pwd):/app \
                             ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} \
-                            ./script.sh ${terraformCommand} ${params.ENVIRONMENT}
+                            ${planAction} ${params.ENVIRONMENT}
                         """
                     }
                 }
@@ -77,14 +77,7 @@ pipeline {
         stage('Approve Changes') {
             steps {
                 script {
-                    def userInput = input(
-                        message: "Do you want to proceed with ${params.ACTION}?",
-                        parameters: [choice(name: 'APPROVE', choices: ['Proceed', 'Abort'], description: 'Approve or Abort')]
-                    )
-
-                    if (userInput == 'Abort') {
-                        error("User aborted the Terraform ${params.ACTION} process.")
-                    }
+                    input message: "Review the Terraform plan for ${params.ACTION}. Approve to proceed?", ok: "Proceed"
                 }
             }
         }
@@ -98,7 +91,7 @@ pipeline {
                             -e AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY \
                             -v \$(pwd):/app \
                             ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} \
-                            apply -auto-approve=false tfplan
+                            ${params.ACTION} ${params.ENVIRONMENT}
                         """
                     }
                 }
